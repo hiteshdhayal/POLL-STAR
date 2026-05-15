@@ -7,7 +7,15 @@ import { sendVerificationEmail } from '../../utils/email';
 import { env } from '../../config/env';
 import { OAuth2Client } from 'google-auth-library';
 
-const googleClient = new OAuth2Client(env.GOOGLE_CLIENT_ID);
+const googleClient = new OAuth2Client(
+  env.GOOGLE_CLIENT_ID,
+  env.GOOGLE_CLIENT_SECRET,
+  env.GOOGLE_REDIRECT_URI
+);
+
+console.log("GOOGLE CLIENT CREATED");
+console.log("ID:", env.GOOGLE_CLIENT_ID);
+console.log("REDIRECT:", env.GOOGLE_REDIRECT_URI);
 
 export const register = async (data: { name: string; email: string; password: string }) => {
   const existingUser = await prisma.user.findUnique({ where: { email: data.email } });
