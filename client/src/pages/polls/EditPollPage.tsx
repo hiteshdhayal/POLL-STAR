@@ -25,8 +25,8 @@ export const editPollSchema = z.object({
       text: z.string().min(1, 'Option text is required').max(200).trim(),
       order: z.number().int(),
     }))
-    .min(4, 'Each question must have exactly 4 options')
-    .max(4, 'Each question must have exactly 4 options'),
+    .min(2, 'Each question must have at least 2 options')
+    .max(6, 'Each question can have at most 6 options'),
   })).min(1, 'At least 1 question required'),
 });
 

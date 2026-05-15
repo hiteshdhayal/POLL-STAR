@@ -106,14 +106,30 @@ export const submitResponse = async (
     const totalResponses = await prisma.response.count({ where: { pollId: poll.id } });
 
     // Get updated counts per option for the answered questions
-    const questionUpdates = await Promise.all(
-      data.answers.map(async (answer) => {
-        const count = await prisma.responseAnswer.count({
-          where: { questionId: answer.questionId, optionId: answer.optionId },
-        });
-        return { questionId: answer.questionId, optionId: answer.optionId, newCount: count };
-      })
-    );
+    // Get updated counts per option using a single aggregation query
+    const groupedCounts = await prisma.responseAnswer.groupBy({
+      by: ['questionId', 'optionId'],
+      where: {
+        OR: data.answers.map((a) => ({
+          questionId: a.questionId,
+          optionId: a.optionId,
+        })),
+      },
+      _count: {
+        _all: true,
+      },
+    });
+
+    const questionUpdates = data.answers.map((answer) => {
+      const match = groupedCounts.find(
+        (g) => g.questionId === answer.questionId && g.optionId === answer.optionId
+      );
+      return {
+        questionId: answer.questionId,
+        optionId: answer.optionId,
+        newCount: match?._count._all || 0,
+      };
+    });
 
     io.to(`poll:${poll.id}`).emit('response:new', { totalResponses, questionUpdates });
   } catch {

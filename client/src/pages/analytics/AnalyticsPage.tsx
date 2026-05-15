@@ -28,14 +28,14 @@ const AnalyticsPage: React.FC = () => {
   const analytics = data?.data?.analytics;
 
   // Real-time updates via Socket
-  const { liveData, isConnected } = usePollSocket(id!);
+  const { liveData, isConnected, isPublished } = usePollSocket(id!);
 
   useEffect(() => {
-    if (liveData) {
+    if (liveData || isPublished) {
       // Optistically update or just invalidate query
       queryClient.invalidateQueries({ queryKey: ['analytics', id] });
     }
-  }, [liveData, id, queryClient]);
+  }, [liveData, isPublished, id, queryClient]);
 
   const publishMutation = useMutation({
     mutationFn: () => pollsApi.publish(id!),

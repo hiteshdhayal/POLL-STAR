@@ -30,7 +30,7 @@ const VerifyEmailPage: React.FC = () => {
       try {
         const { data } = await authApi.verifyEmail(token);
         if (data.success) {
-          setAuth(data.user, data.accessToken, data.refreshToken);
+          setAuth(data.user);
           setStatus('success');
           setTimeout(() => {
             navigate('/dashboard');

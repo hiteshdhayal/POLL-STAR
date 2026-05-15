@@ -25,8 +25,8 @@ export const createPollSchema = z.object({
       text: z.string().min(1, 'Option text is required').max(200).trim(),
       order: z.number().int(),
     }))
-    .min(4, 'Each question must have exactly 4 options')
-    .max(4, 'Each question must have exactly 4 options')
+    .min(2, 'Each question must have at least 2 options')
+    .max(6, 'Each question can have at most 6 options')
     .superRefine((opts, ctx) => {
       opts.forEach((opt, i) => {
         if (!opt.text.trim()) {
@@ -83,12 +83,18 @@ const CreatePollPage: React.FC = () => {
     },
   });
 
+  const [createdPoll, setCreatedPoll] = useState<{ id: string; shareToken: string; title: string } | null>(null);
+
   const onSubmit = async (data: CreatePollFormValues) => {
     setIsLoading(true);
     try {
       const response = await pollsApi.create(data);
-      if (response.data.success) {
-        navigate(`/dashboard`);
+      if (response.data.success && response.data.poll) {
+        setCreatedPoll({
+          id: response.data.poll.id,
+          shareToken: response.data.poll.shareToken,
+          title: response.data.poll.title,
+        });
       }
     } catch (err) {
       console.error(err);
@@ -103,6 +109,48 @@ const CreatePollPage: React.FC = () => {
   const isStep2Invalid = currentValues.questions.length === 0 || currentValues.questions.some(q => 
     !q.text.trim() || q.options.some(o => !o.text.trim())
   );
+
+  if (createdPoll) {
+    const shareUrl = `${window.location.origin}/p/${createdPoll.shareToken}`;
+    return (
+      <PageWrapper>
+        <div className="max-w-2xl mx-auto px-6 py-24 text-center space-y-8 animate-fade-up">
+          <div className="w-16 h-16 bg-crimson/10 rounded-full flex items-center justify-center mx-auto mb-6">
+            <Check className="w-8 h-8 text-crimson" />
+          </div>
+          <h1 className="font-display text-4xl text-charcoal">Poll Created!</h1>
+          <p className="text-muted">Your poll "{createdPoll.title}" has been saved as a draft.</p>
+          
+          <div className="bg-sand p-6 border border-border mt-8 space-y-4 text-left relative overflow-hidden">
+            <div className="absolute top-0 right-0 w-32 h-32 bg-crimson/[0.03] rounded-bl-[100px] pointer-events-none" />
+            <p className="label !mb-2">Share Link</p>
+            <div className="flex items-center gap-2">
+              <Input value={shareUrl} readOnly className="flex-1 bg-white font-mono text-xs" />
+              <Button 
+                onClick={() => {
+                  navigator.clipboard.writeText(shareUrl);
+                  alert('Copied to clipboard!');
+                }}
+                variant="secondary"
+              >
+                Copy
+              </Button>
+            </div>
+            <p className="text-[10px] text-muted">Note: Participants cannot respond until you publish the poll from the dashboard.</p>
+          </div>
+
+          <div className="flex flex-col sm:flex-row justify-center gap-4 mt-8">
+            <Button onClick={() => navigate('/dashboard')} variant="secondary">
+              Go to Dashboard
+            </Button>
+            <Button onClick={() => navigate(`/polls/${createdPoll.id}/edit`)}>
+              Edit & Publish <ArrowRight className="w-4 h-4 ml-2" />
+            </Button>
+          </div>
+        </div>
+      </PageWrapper>
+    );
+  }
 
   return (
     <PageWrapper>

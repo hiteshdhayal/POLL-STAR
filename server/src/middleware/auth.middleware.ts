@@ -13,11 +13,11 @@ declare global {
 }
 
 export const authenticate = async (req: Request, _res: Response, next: NextFunction) => {
-  const authHeader = req.headers.authorization;
-  if (!authHeader?.startsWith('Bearer ')) {
+  const token = req.cookies.accessToken || req.headers.authorization?.split(' ')[1];
+  if (!token) {
     return next(new AppError('No token provided', 401));
   }
-  const token = authHeader.split(' ')[1];
+  
   try {
     const { userId } = verifyAccessToken(token);
     const user = await prisma.user.findUnique({
@@ -34,9 +34,9 @@ export const authenticate = async (req: Request, _res: Response, next: NextFunct
 
 // Does NOT throw — just attaches user if token exists
 export const optionalAuth = async (req: Request, _res: Response, next: NextFunction) => {
-  const authHeader = req.headers.authorization;
-  if (!authHeader?.startsWith('Bearer ')) return next();
-  const token = authHeader.split(' ')[1];
+  const token = req.cookies.accessToken || req.headers.authorization?.split(' ')[1];
+  if (!token) return next();
+  
   try {
     const { userId } = verifyAccessToken(token);
     const user = await prisma.user.findUnique({

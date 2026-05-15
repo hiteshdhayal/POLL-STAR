@@ -61,6 +61,7 @@ export const getPollByShareToken = async (shareToken: string) => {
   });
 
   if (!poll) throw new AppError('Poll not found', 404);
+  if (!poll.isPublished) throw new AppError('Poll is not open for responses yet', 403);
 
   // Auto-expire
   if (poll.expiresAt < new Date() && poll.status === 'ACTIVE') {

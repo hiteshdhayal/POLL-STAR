@@ -6,19 +6,13 @@ export const api = axios.create({
   withCredentials: true,
 });
 
-api.interceptors.request.use((config) => {
-  const token = useAuthStore.getState().accessToken;
-  if (token) config.headers.Authorization = `Bearer ${token}`;
-  return config;
-});
-
 let isRefreshing = false;
-let failedQueue: { resolve: (v: string) => void; reject: (e: unknown) => void }[] = [];
+let failedQueue: { resolve: () => void; reject: (e: unknown) => void }[] = [];
 
-const processQueue = (error: unknown, token: string | null = null) => {
+const processQueue = (error: unknown) => {
   failedQueue.forEach((prom) => {
     if (error) prom.reject(error);
-    else prom.resolve(token!);
+    else prom.resolve();
   });
   failedQueue = [];
 };
@@ -30,10 +24,9 @@ api.interceptors.response.use(
 
     if (error.response?.status === 401 && !original._retry) {
       if (isRefreshing) {
-        return new Promise((resolve, reject) => {
+        return new Promise<void>((resolve, reject) => {
           failedQueue.push({ resolve, reject });
-        }).then((token) => {
-          original.headers.Authorization = `Bearer ${token}`;
+        }).then(() => {
           return api(original);
         });
       }
@@ -41,25 +34,17 @@ api.interceptors.response.use(
       original._retry = true;
       isRefreshing = true;
 
-      const { refreshToken, setAccessToken, logout } = useAuthStore.getState();
-
-      if (!refreshToken) {
-        logout();
-        return Promise.reject(error);
-      }
-
       try {
-        const { data } = await axios.post(
+        await axios.post(
           `${import.meta.env.VITE_API_URL}/auth/refresh`,
-          { refreshToken }
+          {},
+          { withCredentials: true }
         );
-        setAccessToken(data.accessToken);
-        processQueue(null, data.accessToken);
-        original.headers.Authorization = `Bearer ${data.accessToken}`;
+        processQueue(null);
         return api(original);
       } catch (err) {
-        processQueue(err, null);
-        logout();
+        processQueue(err);
+        useAuthStore.getState().logout();
         window.location.href = '/login';
         return Promise.reject(err);
       } finally {

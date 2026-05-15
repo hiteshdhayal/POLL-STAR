@@ -9,41 +9,68 @@ import {
 import * as authService from './auth.service';
 import { env } from '../../config/env';
 
+const setAuthCookies = (res: Response, accessToken: string, refreshToken: string) => {
+  res.cookie('accessToken', accessToken, {
+    httpOnly: true,
+    secure: env.NODE_ENV === 'production',
+    sameSite: 'lax',
+    maxAge: 15 * 60 * 1000, // 15 minutes
+  });
+  res.cookie('refreshToken', refreshToken, {
+    httpOnly: true,
+    secure: env.NODE_ENV === 'production',
+    sameSite: 'lax',
+    maxAge: 7 * 24 * 60 * 60 * 1000, // 7 days
+  });
+};
+
 export const register = asyncHandler(async (req: Request, res: Response) => {
   const data = registerSchema.parse(req.body);
   const result = await authService.register(data);
-  res.status(201).json({ success: true, ...result });
+  res.status(201).json({ success: true, message: result.message });
 });
 
 export const verifyEmail = asyncHandler(async (req: Request, res: Response) => {
   const { token } = verifyEmailSchema.parse(req.body);
   const result = await authService.verifyEmail(token);
-  res.json({ success: true, ...result });
+  setAuthCookies(res, result.accessToken, result.refreshToken);
+  res.json({ success: true, user: result.user });
 });
 
 export const login = asyncHandler(async (req: Request, res: Response) => {
   const { email, password } = loginSchema.parse(req.body);
   const result = await authService.login(email, password);
-  res.json({ success: true, ...result });
+  setAuthCookies(res, result.accessToken, result.refreshToken);
+  res.json({ success: true, user: result.user });
 });
 
 export const refresh = asyncHandler(async (req: Request, res: Response) => {
-  const { refreshToken } = refreshSchema.parse(req.body);
+  const refreshToken = req.cookies.refreshToken;
+  if (!refreshToken) {
+    return res.status(401).json({ success: false, message: 'No refresh token' });
+  }
   const result = await authService.refresh(refreshToken);
-  res.json({ success: true, ...result });
+  setAuthCookies(res, result.accessToken, result.refreshToken);
+  res.json({ success: true });
 });
 
 export const logout = asyncHandler(async (req: Request, res: Response) => {
   const userId = req.user!.id;
-  const result = await authService.logout(userId);
-  res.json({ success: true, ...result });
+  await authService.logout(userId);
+  res.clearCookie('accessToken');
+  res.clearCookie('refreshToken');
+  res.json({ success: true, message: 'Logged out successfully' });
 });
 
-export const googleRedirect = asyncHandler(async (_req: Request, res: Response) => {
+export const googleRedirect = asyncHandler(async (req: Request, res: Response) => {
   try {
-    console.log('--- GOOGLE AUTH REDIRECT ---');
-    console.log('CLIENT_ID:', env.GOOGLE_CLIENT_ID);
-    console.log('REDIRECT_URI:', env.GOOGLE_REDIRECT_URI);
+    // Generate CSRF state
+    const state = Math.random().toString(36).substring(2);
+    res.cookie('oauth_state', state, {
+      httpOnly: true,
+      secure: env.NODE_ENV === 'production',
+      maxAge: 10 * 60 * 1000, // 10 minutes
+    });
 
     const params = new URLSearchParams({
       client_id: env.GOOGLE_CLIENT_ID,
@@ -52,42 +79,34 @@ export const googleRedirect = asyncHandler(async (_req: Request, res: Response) 
       scope: 'openid email profile',
       access_type: 'offline',
       prompt: 'consent',
+      state,
     });
     res.redirect(`https://accounts.google.com/o/oauth2/v2/auth?${params.toString()}`);
   } catch (err) {
     console.error('GOOGLE REDIRECT ERROR:', err);
-    res.status(500).json({
-      success: false,
-      error: err instanceof Error ? err.message : 'Unknown error during redirect'
-    });
+    res.redirect(`${env.CLIENT_URL}/login?error=oauth_init_failed`);
   }
 });
 
 export const googleCallback = asyncHandler(async (req: Request, res: Response) => {
   try {
-    console.log('--- GOOGLE AUTH CALLBACK ---');
-    const code = req.query.code as string;
-    
-    if (!code) {
-      console.warn('OAuth Error: No code received in callback');
+    const { code, state } = req.query;
+    const storedState = req.cookies.oauth_state;
+    res.clearCookie('oauth_state');
+
+    if (!code || !state || state !== storedState) {
+      console.warn('OAuth Error: Invalid code or state mismatch');
       return res.redirect(`${env.CLIENT_URL}/login?error=oauth_failed`);
     }
 
-    const result = await authService.googleOAuth(code);
+    const result = await authService.googleOAuth(code as string);
+    setAuthCookies(res, result.accessToken, result.refreshToken);
     
-    const params = new URLSearchParams({
-      accessToken: result.accessToken,
-      refreshToken: result.refreshToken,
-    });
-
-    console.log('OAuth Success: User authenticated, redirecting to client');
-    res.redirect(`${env.CLIENT_URL}/oauth-callback?${params.toString()}`);
+    // Redirect cleanly without tokens in URL
+    res.redirect(`${env.CLIENT_URL}/oauth-callback`);
   } catch (err) {
     console.error('GOOGLE AUTH CALLBACK ERROR:', err);
-    res.status(500).json({
-      success: false,
-      error: err instanceof Error ? err.message : 'Unknown error during callback'
-    });
+    res.redirect(`${env.CLIENT_URL}/login?error=oauth_failed`);
   }
 });
 

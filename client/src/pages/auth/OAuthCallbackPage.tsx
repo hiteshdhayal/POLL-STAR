@@ -1,32 +1,20 @@
 import React, { useEffect } from 'react';
-import { useSearchParams, useNavigate } from 'react-router-dom';
+import { useNavigate } from 'react-router-dom';
 import { useAuthStore } from '../../store/authStore';
 import { authApi } from '../../api/auth.api';
 import { PageWrapper } from '../../components/layout/PageWrapper';
 import { Loader2 } from 'lucide-react';
 
 const OAuthCallbackPage: React.FC = () => {
-  const [searchParams] = useSearchParams();
   const navigate = useNavigate();
   const setAuth = useAuthStore((state) => state.setAuth);
 
   useEffect(() => {
-    const accessToken = searchParams.get('accessToken');
-    const refreshToken = searchParams.get('refreshToken');
-
-    if (!accessToken || !refreshToken) {
-      navigate('/login?error=oauth_failed');
-      return;
-    }
-
     const finalizeAuth = async () => {
       try {
-        // Temporary set auth to fetch 'me'
-        useAuthStore.setState({ accessToken, refreshToken });
-        
         const { data } = await authApi.me();
-        if (data.success) {
-          setAuth(data.user, accessToken, refreshToken);
+        if (data.success && data.user) {
+          setAuth(data.user);
           navigate('/dashboard');
         } else {
           throw new Error('Failed to fetch user data');
@@ -38,7 +26,7 @@ const OAuthCallbackPage: React.FC = () => {
     };
 
     finalizeAuth();
-  }, [searchParams, navigate, setAuth]);
+  }, [navigate, setAuth]);
 
   return (
     <PageWrapper noNavbar>

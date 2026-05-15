@@ -3,13 +3,13 @@ import { authApi } from '../api/auth.api';
 import type { User } from '../types';
 
 export const useAuth = () => {
-  const { user, accessToken, setAuth, logout: storeLogout } = useAuthStore();
+  const { user, setAuth, logout: storeLogout } = useAuthStore();
 
-  const isAuthenticated = !!user && !!accessToken;
+  const isAuthenticated = !!user;
 
   const login = async (email: string, password: string) => {
     const { data } = await authApi.login({ email, password });
-    setAuth(data.user as User, data.accessToken, data.refreshToken);
+    setAuth(data.user as User);
     return data;
   };
 

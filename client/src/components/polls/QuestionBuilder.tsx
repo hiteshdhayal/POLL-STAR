@@ -100,11 +100,15 @@ interface QuestionCardProps {
 }
 
 const QuestionCard: React.FC<QuestionCardProps> = ({
-  qIndex, register, errors, onRemove, canRemove,
+  qIndex, control, register, errors, onRemove, canRemove,
 }) => {
   const questionErrors = errors?.questions?.[qIndex];
-  // Accessing error message for array level
   const optionsError = (errors?.questions?.[qIndex] as any)?.options?.message;
+
+  const { fields: optionFields, append: appendOption, remove: removeOption } = useFieldArray({
+    control,
+    name: `questions.${qIndex}.options`,
+  });
 
   return (
     <div className={`card border space-y-6 relative transition-all ${questionErrors ? 'border-crimson/30 shadow-[0_8px_32px_rgba(196,30,58,0.05)]' : 'border-border'}`}>
@@ -131,7 +135,6 @@ const QuestionCard: React.FC<QuestionCardProps> = ({
         )}
       </div>
 
-      {/* Required toggle */}
       <div className="flex items-center gap-3 pl-7">
         <label className="flex items-center gap-3 cursor-pointer group">
           <div className="relative">
@@ -147,25 +150,46 @@ const QuestionCard: React.FC<QuestionCardProps> = ({
         </label>
       </div>
 
-      {/* Options */}
       <div className="pl-7 space-y-4">
         <div className="flex items-center justify-between">
-          <p className="label !mb-0 text-charcoal opacity-40">Options (Fixed 4)</p>
+          <p className="label !mb-0 text-charcoal opacity-40">Options</p>
           {optionsError && (
             <p className="text-[10px] text-crimson font-bold uppercase tracking-widest">{optionsError}</p>
           )}
         </div>
         
-        <div className="grid grid-cols-1 md:grid-cols-2 gap-x-6 gap-y-4">
-          {[0, 1, 2, 3].map((oi) => (
-            <OptionInput
-              key={oi}
-              questionIndex={qIndex}
-              optionIndex={oi}
-              register={register}
-              errors={errors}
-            />
+        <div className="space-y-3">
+          {optionFields.map((field, oi) => (
+            <div key={field.id} className="flex items-center gap-2">
+              <div className="flex-1">
+                <OptionInput
+                  questionIndex={qIndex}
+                  optionIndex={oi}
+                  register={register}
+                  errors={errors}
+                />
+              </div>
+              {optionFields.length > 2 && (
+                <button
+                  type="button"
+                  onClick={() => removeOption(oi)}
+                  className="p-1 text-muted hover:text-crimson transition-colors mt-2"
+                >
+                  <Trash2 className="w-3 h-3" />
+                </button>
+              )}
+            </div>
           ))}
+          
+          {optionFields.length < 6 && (
+            <button
+              type="button"
+              onClick={() => appendOption({ text: '', order: optionFields.length })}
+              className="mt-2 text-[10px] font-bold uppercase tracking-widest text-muted hover:text-charcoal flex items-center gap-1 transition-colors"
+            >
+              <Plus className="w-3 h-3" /> Add Option
+            </button>
+          )}
         </div>
       </div>
     </div>

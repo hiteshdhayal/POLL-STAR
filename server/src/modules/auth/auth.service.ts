@@ -13,9 +13,7 @@ const googleClient = new OAuth2Client(
   env.GOOGLE_REDIRECT_URI
 );
 
-console.log("GOOGLE CLIENT CREATED");
-console.log("ID:", env.GOOGLE_CLIENT_ID);
-console.log("REDIRECT:", env.GOOGLE_REDIRECT_URI);
+
 
 export const register = async (data: { name: string; email: string; password: string }) => {
   const existingUser = await prisma.user.findUnique({ where: { email: data.email } });

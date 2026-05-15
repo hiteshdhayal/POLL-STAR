@@ -12,6 +12,7 @@ import CreatePollPage from './pages/polls/CreatePollPage';
 import EditPollPage from './pages/polls/EditPollPage';
 import MyPollsPage from './pages/polls/MyPollsPage';
 import RespondPage from './pages/respond/RespondPage';
+import PublicResultsPage from './pages/respond/PublicResultsPage';
 import AnalyticsPage from './pages/analytics/AnalyticsPage';
 
 // Components
@@ -38,9 +39,7 @@ function App() {
           <Route path="/verify-email" element={<VerifyEmailPage />} />
           <Route path="/oauth-callback" element={<OAuthCallbackPage />} />
           <Route path="/p/:shareToken" element={<RespondPage />} />
-          
-          {/* Results view (reusing analytics or a specific simplified results page could go here) */}
-          <Route path="/p/:shareToken/results" element={<RespondPage />} /> 
+          <Route path="/p/:shareToken/results" element={<PublicResultsPage />} /> 
 
           {/* Protected Routes */}
           <Route element={<ProtectedRoute />}>

@@ -4,17 +4,19 @@ import { useAuthStore } from '../store/authStore';
 
 export const useSocket = () => {
   const socketRef = useRef<Socket | null>(null);
-  const { accessToken } = useAuthStore();
+  const { user } = useAuthStore();
 
   useEffect(() => {
+    if (!user) return; // Only connect if authenticated
+
     socketRef.current = io(import.meta.env.VITE_SOCKET_URL, {
-      auth: { token: accessToken },
+      withCredentials: true,
     });
 
     return () => {
       socketRef.current?.disconnect();
     };
-  }, [accessToken]);
+  }, [user]);
 
   return socketRef.current;
 };
