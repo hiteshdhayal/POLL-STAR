@@ -12,30 +12,31 @@ import { pollsApi } from '../../api/polls.api';
 import { analyticsApi } from '../../api/analytics.api';
 import { ArrowLeft, Save, Loader2 } from 'lucide-react';
 
-const editPollSchema = z.object({
-  title: z.string().min(3, 'Title must be at least 3 characters').max(200),
-  description: z.string().max(1000).optional(),
+export const editPollSchema = z.object({
+  title: z.string().min(3, 'Title must be at least 3 characters').max(200).trim(),
+  description: z.string().max(1000).trim().optional(),
   isAnonymous: z.boolean().default(false),
   expiresAt: z.string(),
   questions: z.array(z.object({
-    text: z.string().min(1, 'Question text is required').max(500),
-    isRequired: z.boolean().default(true),
+    text: z.string().min(1, 'Question text is required').max(500).trim(),
+    isRequired: z.boolean().default(false),
     order: z.number().int(),
     options: z.array(z.object({
-      text: z.string().min(1, 'Option text is required').max(200),
+      text: z.string().min(1, 'Option text is required').max(200).trim(),
       order: z.number().int(),
-    })).min(2, 'At least 2 options required'),
+    }))
+    .min(4, 'Each question must have exactly 4 options')
+    .max(4, 'Each question must have exactly 4 options'),
   })).min(1, 'At least 1 question required'),
 });
 
-type EditPollFormValues = z.infer<typeof editPollSchema>;
+export type EditPollFormValues = z.infer<typeof editPollSchema>;
 
 const EditPollPage: React.FC = () => {
   const { id } = useParams<{ id: string }>();
   const navigate = useNavigate();
   const [isSaving, setIsSaving] = useState(false);
 
-  // Use analytics API as it returns the full poll object including questions
   const { data, isLoading, error } = useQuery({
     queryKey: ['poll-edit', id],
     queryFn: () => analyticsApi.get(id!),
@@ -43,29 +44,24 @@ const EditPollPage: React.FC = () => {
   });
 
   const { register, control, handleSubmit, reset, formState: { errors } } = useForm<EditPollFormValues>({
-    resolver: zodResolver(editPollSchema),
+    resolver: zodResolver(editPollSchema) as any,
   });
 
   useEffect(() => {
     if (data?.data?.analytics) {
       const poll = data.data.analytics;
-      // Convert analytics questions back to form format
       const formQuestions = poll.questions.map(q => ({
         text: q.text,
         isRequired: q.isRequired,
-        order: 0, // In reality, we'd need the real order, but this is a simplified view
+        order: 0,
         options: q.options.map((o, idx) => ({ text: o.text, order: idx }))
       }));
-
-      // Find the actual poll object to get expiresAt and description (analytics might not have everything)
-      // Since analytics service returns a simplified view, we might need a dedicated 'get' endpoint.
-      // For now, let's assume analytics service has enough or we'd fetch the full poll separately.
       
       reset({
         title: poll.pollTitle,
-        description: '', // Analytics doesn't return description yet
+        description: '',
         isAnonymous: false,
-        expiresAt: new Date().toISOString().slice(0, 16), // Placeholder
+        expiresAt: new Date().toISOString().slice(0, 16),
         questions: formQuestions
       });
     }
@@ -81,7 +77,7 @@ const EditPollPage: React.FC = () => {
       console.error(err);
       alert('Failed to update poll.');
     } finally {
-      setIsSaving(isSaving);
+      setIsSaving(false);
     }
   };
 

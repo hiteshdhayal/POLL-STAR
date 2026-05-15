@@ -10,7 +10,7 @@ import { QuestionBuilder } from '../../components/polls/QuestionBuilder';
 import { pollsApi } from '../../api/polls.api';
 import { Check, ArrowRight, ArrowLeft, Send, Users, Eye, AlertCircle } from 'lucide-react';
 
-const createPollSchema = z.object({
+export const createPollSchema = z.object({
   title: z.string().min(3, 'Title must be at least 3 characters').max(200).trim(),
   description: z.string().max(1000).trim().optional(),
   isAnonymous: z.boolean().default(false),
@@ -19,7 +19,7 @@ const createPollSchema = z.object({
   }),
   questions: z.array(z.object({
     text: z.string().min(1, 'Question text is required').max(500).trim(),
-    isRequired: z.boolean().default(true),
+    isRequired: z.boolean().default(false),
     order: z.number().int(),
     options: z.array(z.object({
       text: z.string().min(1, 'Option text is required').max(200).trim(),
@@ -55,22 +55,22 @@ const createPollSchema = z.object({
   }),
 });
 
-type CreatePollFormValues = z.infer<typeof createPollSchema>;
+export type CreatePollFormValues = z.infer<typeof createPollSchema>;
 
 const CreatePollPage: React.FC = () => {
   const navigate = useNavigate();
   const [step, setStep] = useState(1);
   const [isLoading, setIsLoading] = useState(false);
 
-  const { register, control, handleSubmit, watch, formState: { errors, isValid, touchedFields } } = useForm<CreatePollFormValues>({
-    resolver: zodResolver(createPollSchema),
+  const { register, control, handleSubmit, watch, formState: { errors } } = useForm<CreatePollFormValues>({
+    resolver: zodResolver(createPollSchema) as any,
     mode: 'all',
     defaultValues: {
       isAnonymous: false,
       questions: [
         {
           text: '',
-          isRequired: true,
+          isRequired: false,
           order: 0,
           options: [
             { text: '', order: 0 },
@@ -100,7 +100,6 @@ const CreatePollPage: React.FC = () => {
 
   const currentValues = watch();
 
-  // Helper to check if any field is invalid in current step
   const isStep2Invalid = currentValues.questions.length === 0 || currentValues.questions.some(q => 
     !q.text.trim() || q.options.some(o => !o.text.trim())
   );

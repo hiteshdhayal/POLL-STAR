@@ -108,7 +108,7 @@ const LoginPage: React.FC = () => {
                   error={errors.password?.message}
                 />
                 <div className="flex justify-end">
-                  <Link to="/forgot-password" size="sm" className="btn-ghost !no-underline text-[10px] uppercase tracking-widest font-bold">
+                  <Link to="/forgot-password" className="btn-ghost !no-underline text-[10px] uppercase tracking-widest font-bold">
                     Forgot Password?
                   </Link>
                 </div>

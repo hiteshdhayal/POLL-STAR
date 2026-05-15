@@ -80,3 +80,5 @@ export interface AuthResponse {
   refreshToken: string;
   user: User;
 }
+
+export type EditPollFormValues = any; // Placeholder or remove if not needed elsewhere

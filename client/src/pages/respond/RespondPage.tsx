@@ -1,4 +1,4 @@
-import React, { useState, useEffect } from 'react';
+import React, { useState } from 'react';
 import { useParams, Link } from 'react-router-dom';
 import { useQuery, useMutation } from '@tanstack/react-query';
 import { PageWrapper } from '../../components/layout/PageWrapper';
@@ -7,11 +7,11 @@ import { responsesApi } from '../../api/responses.api';
 import { Button } from '../../components/ui/Button';
 import { Badge } from '../../components/ui/Badge';
 import { Loader2, CheckCircle2, Clock, AlertCircle } from 'lucide-react';
-import { useAuthStore } from '../../store/authStore';
+
 
 const RespondPage: React.FC = () => {
   const { shareToken } = useParams<{ shareToken: string }>();
-  const user = useAuthStore(state => state.user);
+
   const [answers, setAnswers] = useState<Record<string, string>>({});
   const [isSubmitted, setIsSubmitted] = useState(false);
   const [error, setError] = useState<string | null>(null);

@@ -3,19 +3,7 @@ import { useFieldArray } from 'react-hook-form';
 import type { Control, UseFormRegister, FieldErrors } from 'react-hook-form';
 import { Plus, Trash2, GripVertical, AlertCircle } from 'lucide-react';
 import { Input } from '../ui/Input';
-
-interface CreatePollFormValues {
-  title: string;
-  description?: string;
-  isAnonymous: boolean;
-  expiresAt: string;
-  questions: {
-    text: string;
-    isRequired: boolean;
-    order: number;
-    options: { text: string; order: number }[];
-  }[];
-}
+import type { CreatePollFormValues } from '../../pages/polls/CreatePollPage';
 
 interface QuestionBuilderProps {
   control: Control<CreatePollFormValues>;
@@ -83,7 +71,7 @@ export const QuestionBuilder: React.FC<QuestionBuilderProps> = ({ control, regis
         onClick={() =>
           appendQuestion({
             text: '',
-            isRequired: true,
+            isRequired: false,
             order: questionFields.length,
             options: [
               { text: '', order: 0 },
@@ -115,7 +103,8 @@ const QuestionCard: React.FC<QuestionCardProps> = ({
   qIndex, register, errors, onRemove, canRemove,
 }) => {
   const questionErrors = errors?.questions?.[qIndex];
-  const optionsError = errors?.questions?.[qIndex]?.options?.message;
+  // Accessing error message for array level
+  const optionsError = (errors?.questions?.[qIndex] as any)?.options?.message;
 
   return (
     <div className={`card border space-y-6 relative transition-all ${questionErrors ? 'border-crimson/30 shadow-[0_8px_32px_rgba(196,30,58,0.05)]' : 'border-border'}`}>
