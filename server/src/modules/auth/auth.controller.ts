@@ -9,18 +9,22 @@ import {
 import * as authService from './auth.service';
 import { env } from '../../config/env';
 
+const isProd = env.NODE_ENV === 'production';
+
 const setAuthCookies = (res: Response, accessToken: string, refreshToken: string) => {
   res.cookie('accessToken', accessToken, {
     httpOnly: true,
-    secure: env.NODE_ENV === 'production',
-    sameSite: 'lax',
-    maxAge: 15 * 60 * 1000, // 15 minutes
+    secure: isProd,
+    sameSite: isProd ? 'none' : 'lax',
+    maxAge: 15 * 60 * 1000,
+    path: '/',
   });
   res.cookie('refreshToken', refreshToken, {
     httpOnly: true,
-    secure: env.NODE_ENV === 'production',
-    sameSite: 'lax',
-    maxAge: 7 * 24 * 60 * 60 * 1000, // 7 days
+    secure: isProd,
+    sameSite: isProd ? 'none' : 'lax',
+    maxAge: 7 * 24 * 60 * 60 * 1000,
+    path: '/',
   });
 };
 
@@ -68,8 +72,10 @@ export const googleRedirect = asyncHandler(async (req: Request, res: Response) =
     const state = Math.random().toString(36).substring(2);
     res.cookie('oauth_state', state, {
       httpOnly: true,
-      secure: env.NODE_ENV === 'production',
+      secure: isProd,
+      sameSite: 'lax',
       maxAge: 10 * 60 * 1000, // 10 minutes
+      path: '/',
     });
 
     const params = new URLSearchParams({
