@@ -23,31 +23,46 @@ app.set('trust proxy', 1);
 initSocket(httpServer);
 
 app.use(helmet());
+app.use((req, res, next) => {
+  console.log(`[CORS Debug] Origin: ${req.headers.origin}, Method: ${req.method}, Path: ${req.path}`);
+  next();
+});
+
 app.use(
   cors({
     origin: (origin, callback) => {
-      // Allow requests with no origin (like mobile apps or curl requests)
-      // Allow exact match to CLIENT_URL
-      // Allow any Vercel preview URL
-      // Allow localhost for development
+      // Allow requests with no origin (mobile apps, curl, etc.)
+      if (!origin) return callback(null, true);
+      
+      const allowedOrigins = [
+        env.CLIENT_URL,
+        'https://poll-star.vercel.app',
+      ];
+      
       if (
-        !origin || 
-        origin === env.CLIENT_URL || 
-        origin.endsWith('.vercel.app') || 
-        origin.startsWith('http://localhost:')
+        allowedOrigins.includes(origin) ||
+        origin.endsWith('.vercel.app') ||
+        origin.startsWith('http://localhost:') ||
+        origin.startsWith('http://127.0.0.1:')
       ) {
         callback(null, true);
       } else {
+        console.warn(`CORS blocked origin: ${origin}`);
         callback(new Error('Not allowed by CORS'));
       }
     },
     credentials: true,
+    methods: ['GET', 'POST', 'PUT', 'DELETE', 'OPTIONS', 'PATCH'],
+    allowedHeaders: ['Content-Type', 'Authorization', 'X-Requested-With'],
   })
 );
+
+app.options('*', cors());
 app.use(express.json());
 app.use(cookieParser());
 app.use('/api/', apiLimiter);
 
+app.get('/', (_req, res) => res.json({ message: 'PollStar Server is running!' }));
 app.get('/health', (_req, res) => res.json({ status: 'ok', timestamp: new Date().toISOString() }));
 
 app.use('/api/auth', authRoutes);
