@@ -6,7 +6,7 @@ import LandingPage from './pages/LandingPage';
 import LoginPage from './pages/auth/LoginPage';
 import RegisterPage from './pages/auth/RegisterPage';
 import VerifyEmailPage from './pages/auth/VerifyEmailPage';
-import OAuthCallbackPage from './pages/auth/OAuthCallbackPage';
+import OAuthCallback from './pages/OAuthCallback';
 import DashboardPage from './pages/dashboard/DashboardPage';
 import CreatePollPage from './pages/polls/CreatePollPage';
 import EditPollPage from './pages/polls/EditPollPage';
@@ -37,7 +37,7 @@ function App() {
           <Route path="/login" element={<LoginPage />} />
           <Route path="/register" element={<RegisterPage />} />
           <Route path="/verify-email" element={<VerifyEmailPage />} />
-          <Route path="/oauth-callback" element={<OAuthCallbackPage />} />
+          <Route path="/oauth-callback" element={<OAuthCallback />} />
           <Route path="/p/:shareToken" element={<RespondPage />} />
           <Route path="/p/:shareToken/results" element={<PublicResultsPage />} /> 
 

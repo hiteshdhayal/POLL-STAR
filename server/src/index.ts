@@ -30,20 +30,30 @@ app.use((req, res, next) => {
 
 app.use(
   cors({
-    origin: [
-      'https://poll-star.vercel.app',
-      env.CLIENT_URL,
-    ],
+    origin: true,
     credentials: true,
     methods: ['GET', 'POST', 'PUT', 'DELETE', 'PATCH', 'OPTIONS'],
-    allowedHeaders: ['Content-Type', 'Authorization'],
+    allowedHeaders: [
+      'Content-Type',
+      'Authorization',
+      'X-Requested-With',
+      'Accept',
+      'Origin',
+    ],
   })
 );
 
-app.options('*', cors());
 app.use(express.json());
 app.use(cookieParser());
-app.use('/api/', apiLimiter);
+app.use(
+  '/api/',
+  (req, res, next) => {
+    if (req.method === 'OPTIONS') {
+      return next();
+    }
+    apiLimiter(req, res, next);
+  }
+);
 
 app.get('/', (_req, res) => res.json({ message: 'PollStar Server is running!' }));
 app.get('/health', (_req, res) => res.json({ status: 'ok', timestamp: new Date().toISOString() }));
