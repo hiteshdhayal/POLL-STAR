@@ -7,7 +7,7 @@ export const useSocket = () => {
   const { accessToken } = useAuthStore();
 
   useEffect(() => {
-    socketRef.current = io(import.meta.env.VITE_SOCKET_URL || 'http://localhost:5000', {
+    socketRef.current = io(import.meta.env.VITE_SOCKET_URL, {
       auth: { token: accessToken },
     });
 

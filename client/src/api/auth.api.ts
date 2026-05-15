@@ -23,6 +23,6 @@ export const authApi = {
   me: () => api.get<{ success: boolean; user: User }>('/auth/me'),
 
   googleLogin: () => {
-    window.location.href = `${import.meta.env.VITE_API_URL || 'http://localhost:5000/api'}/auth/google`;
+    window.location.href = `${import.meta.env.VITE_API_URL}/auth/google`;
   },
 };
