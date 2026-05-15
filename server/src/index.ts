@@ -57,8 +57,19 @@ app.use('/api/analytics', analyticsRoutes);
 
 app.use(globalErrorHandler);
 
-httpServer.listen(env.PORT, () => {
-  console.log(`🚀 PollStar server running on port ${env.PORT} [${env.NODE_ENV}]`);
+httpServer.listen(env.PORT, '0.0.0.0', () => {
+  console.log(`🚀 PollStar server running on port ${env.PORT}`);
+  console.log(`Environment: ${env.NODE_ENV}`);
+  console.log(`Client URL: ${env.CLIENT_URL}`);
+});
+
+process.on('uncaughtException', (err) => {
+  console.error('Uncaught Exception:', err);
+  process.exit(1);
+});
+
+process.on('unhandledRejection', (reason) => {
+  console.error('Unhandled Rejection:', reason);
 });
 
 const gracefulShutdown = async (signal: string) => {
