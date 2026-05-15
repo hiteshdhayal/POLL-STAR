@@ -1,0 +1,110 @@
+@import url('https://fonts.googleapis.com/css2?family=Playfair+Display:ital,wght@0,400;0,600;0,700;1,400&family=DM+Sans:opsz,wght@9..40,300;9..40,400;9..40,500;9..40,600&display=swap');
+
+@tailwind base;
+@tailwind components;
+@tailwind utilities;
+
+@layer base {
+  * {
+    font-family: 'DM Sans', sans-serif;
+    box-sizing: border-box;
+  }
+
+  body {
+    background-color: #FAF7F2;
+    color: #1A1A1A;
+    -webkit-font-smoothing: antialiased;
+    -moz-osx-font-smoothing: grayscale;
+  }
+
+  ::selection {
+    background-color: #C41E3A;
+    color: #FAF7F2;
+  }
+}
+
+@layer components {
+  .font-display {
+    font-family: 'Playfair Display', Georgia, serif;
+  }
+
+  .btn-primary {
+    @apply bg-red-600 text-white text-xs tracking-widest uppercase px-8 py-4 font-semibold transition-all duration-200 hover:bg-crimson-dark active:scale-95 disabled:opacity-50 disabled:cursor-not-allowed;
+  }
+
+  .btn-secondary {
+    @apply border border-crimson text-crimson text-xs tracking-widest uppercase px-8 py-4 font-semibold transition-all duration-200 hover:bg-red-600 hover:text-white active:scale-95;
+  }
+
+  .btn-ghost {
+    @apply text-charcoal text-sm underline underline-offset-4 hover:text-crimson transition-colors duration-200;
+  }
+
+  .input-field {
+    @apply w-full border border-border bg-transparent px-4 py-3 text-sm text-charcoal placeholder:text-muted focus:outline-none focus:ring-2 focus:ring-crimson/30 focus:border-crimson transition-all duration-200;
+  }
+
+  .card {
+    @apply bg-card-bg border border-border p-6;
+  }
+
+  .label {
+    @apply text-xs uppercase tracking-widest text-muted font-medium;
+  }
+}
+
+@layer utilities {
+  .animate-fade-up {
+    opacity: 0;
+    animation: fadeUp 0.6s ease forwards;
+  }
+
+  .animation-delay-100 {
+    animation-delay: 0.1s;
+  }
+
+  .animation-delay-200 {
+    animation-delay: 0.2s;
+  }
+
+  .animation-delay-300 {
+    animation-delay: 0.3s;
+  }
+
+  .animation-delay-400 {
+    animation-delay: 0.4s;
+  }
+
+  .animation-delay-500 {
+    animation-delay: 0.5s;
+  }
+}
+
+@keyframes fadeUp {
+  0% {
+    opacity: 0;
+    transform: translateY(20px);
+  }
+
+  100% {
+    opacity: 1;
+    transform: translateY(0);
+  }
+}
+
+@keyframes livePulse {
+  0%,
+  100% {
+    opacity: 1;
+    transform: scale(1);
+  }
+
+  50% {
+    opacity: 0.5;
+    transform: scale(0.8);
+  }
+}
+
+.live-dot {
+  animation: livePulse 1.5s ease-in-out infinite;
+}

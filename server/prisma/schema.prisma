@@ -1,0 +1,98 @@
+generator client {
+  provider = "prisma-client-js"
+}
+
+datasource db {
+  provider = "postgresql"
+  url      = env("DATABASE_URL")
+}
+
+model User {
+  id                     String    @id @default(cuid())
+  email                  String    @unique
+  name                   String
+  passwordHash           String?
+  googleId               String?   @unique
+  avatarUrl              String?
+  isEmailVerified        Boolean   @default(false)
+  emailVerifyToken       String?
+  emailVerifyTokenExpiry DateTime?
+  refreshToken           String?
+  createdAt              DateTime  @default(now())
+  updatedAt              DateTime  @updatedAt
+
+  polls     Poll[]
+  responses Response[]
+}
+
+model Poll {
+  id          String     @id @default(cuid())
+  title       String
+  description String?
+  creatorId   String
+  creator     User       @relation(fields: [creatorId], references: [id], onDelete: Cascade)
+  isAnonymous Boolean    @default(false)
+  expiresAt   DateTime
+  status      PollStatus @default(ACTIVE)
+  isPublished Boolean    @default(false)
+  shareToken  String     @unique @default(cuid())
+  createdAt   DateTime   @default(now())
+  updatedAt   DateTime   @updatedAt
+
+  questions Question[]
+  responses Response[]
+}
+
+enum PollStatus {
+  ACTIVE
+  EXPIRED
+  CLOSED
+}
+
+model Question {
+  id         String   @id @default(cuid())
+  pollId     String
+  poll       Poll     @relation(fields: [pollId], references: [id], onDelete: Cascade)
+  text       String
+  isRequired Boolean  @default(true)
+  order      Int
+  createdAt  DateTime @default(now())
+
+  options QuestionOption[]
+  answers ResponseAnswer[]
+}
+
+model QuestionOption {
+  id         String   @id @default(cuid())
+  questionId String
+  question   Question @relation(fields: [questionId], references: [id], onDelete: Cascade)
+  text       String
+  order      Int
+
+  answers ResponseAnswer[]
+}
+
+model Response {
+  id          String   @id @default(cuid())
+  pollId      String
+  poll        Poll     @relation(fields: [pollId], references: [id], onDelete: Cascade)
+  userId      String?
+  user        User?    @relation(fields: [userId], references: [id], onDelete: SetNull)
+  sessionId   String?
+  ipHash      String?
+  submittedAt DateTime @default(now())
+
+  answers ResponseAnswer[]
+
+  @@unique([pollId, userId])
+}
+
+model ResponseAnswer {
+  id         String         @id @default(cuid())
+  responseId String
+  response   Response       @relation(fields: [responseId], references: [id], onDelete: Cascade)
+  questionId String
+  question   Question       @relation(fields: [questionId], references: [id], onDelete: Cascade)
+  optionId   String
+  option     QuestionOption @relation(fields: [optionId], references: [id], onDelete: Cascade)
+}
